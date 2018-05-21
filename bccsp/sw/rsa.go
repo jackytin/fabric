@@ -39,37 +39,39 @@ func (s *rsaSigner) Sign(k bccsp.Key, digest []byte, opts bccsp.SignerOpts) (sig
 type rsaPrivateKeyVerifier struct{}
 
 func (v *rsaPrivateKeyVerifier) Verify(k bccsp.Key, signature, digest []byte, opts bccsp.SignerOpts) (valid bool, err error) {
-	if opts == nil {
-		opts = crypto.SHA256
-		//return false, errors.New("Invalid options. It must not be nil.")
-	}
-	switch opts.(type) {
-	case *rsa.PSSOptions:
-		err := rsa.VerifyPSS(&(k.(*rsaPrivateKey).privKey.PublicKey),
-			(opts.(*rsa.PSSOptions)).Hash,
-			digest, signature, opts.(*rsa.PSSOptions))
+	if opts != nil {
+		switch opts.(type) {
+		case *rsa.PSSOptions:
+			err := rsa.VerifyPSS(&(k.(*rsaPrivateKey).privKey.PublicKey),
+				(opts.(*rsa.PSSOptions)).Hash,
+				digest, signature, opts.(*rsa.PSSOptions))
 
-		return err == nil, err
-	default:
-		return false, fmt.Errorf("Opts type not recognized [%s]", opts)
+			return err == nil, err
+		default:
+			return false, fmt.Errorf("Opts type not recognized [%s]", opts)
+		}
 	}
+
+	err = rsa.VerifyPKCS1v15(&(k.(*rsaPrivateKey).privKey.PublicKey), crypto.SHA256, digest, signature)
+	return err == nil, err
 }
 
 type rsaPublicKeyKeyVerifier struct{}
 
 func (v *rsaPublicKeyKeyVerifier) Verify(k bccsp.Key, signature, digest []byte, opts bccsp.SignerOpts) (valid bool, err error) {
-	if opts == nil {
-		opts = crypto.SHA256
+	if opts != nil {
 		//return false, errors.New("Invalid options. It must not be nil.")
-	}
-	switch opts.(type) {
-	case *rsa.PSSOptions:
-		err := rsa.VerifyPSS(k.(*rsaPublicKey).pubKey,
-			(opts.(*rsa.PSSOptions)).Hash,
-			digest, signature, opts.(*rsa.PSSOptions))
+		switch opts.(type) {
+		case *rsa.PSSOptions:
+			err := rsa.VerifyPSS(k.(*rsaPublicKey).pubKey,
+				(opts.(*rsa.PSSOptions)).Hash,
+				digest, signature, opts.(*rsa.PSSOptions))
 
-		return err == nil, err
-	default:
-		return false, fmt.Errorf("Opts type not recognized [%s]", opts)
+			return err == nil, err
+		default:
+			return false, fmt.Errorf("Opts type not recognized [%s]", opts)
+		}
 	}
+	err = rsa.VerifyPKCS1v15(k.(*rsaPublicKey).pubKey, crypto.SHA256, digest, signature)
+	return err == nil, err
 }
