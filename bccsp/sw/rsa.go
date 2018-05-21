@@ -19,17 +19,18 @@ package sw
 import (
 	"crypto/rand"
 	"crypto/rsa"
-	"errors"
 	"fmt"
 
 	"github.com/hyperledger/fabric/bccsp"
+	"crypto"
 )
 
 type rsaSigner struct{}
 
 func (s *rsaSigner) Sign(k bccsp.Key, digest []byte, opts bccsp.SignerOpts) (signature []byte, err error) {
 	if opts == nil {
-		return nil, errors.New("Invalid options. Must be different from nil.")
+		opts = crypto.SHA256
+		//return nil, errors.New("Invalid options. Must be different from nil.")
 	}
 
 	return k.(*rsaPrivateKey).privKey.Sign(rand.Reader, digest, opts)
@@ -39,7 +40,8 @@ type rsaPrivateKeyVerifier struct{}
 
 func (v *rsaPrivateKeyVerifier) Verify(k bccsp.Key, signature, digest []byte, opts bccsp.SignerOpts) (valid bool, err error) {
 	if opts == nil {
-		return false, errors.New("Invalid options. It must not be nil.")
+		opts = crypto.SHA256
+		//return false, errors.New("Invalid options. It must not be nil.")
 	}
 	switch opts.(type) {
 	case *rsa.PSSOptions:
@@ -57,7 +59,8 @@ type rsaPublicKeyKeyVerifier struct{}
 
 func (v *rsaPublicKeyKeyVerifier) Verify(k bccsp.Key, signature, digest []byte, opts bccsp.SignerOpts) (valid bool, err error) {
 	if opts == nil {
-		return false, errors.New("Invalid options. It must not be nil.")
+		opts = crypto.SHA256
+		//return false, errors.New("Invalid options. It must not be nil.")
 	}
 	switch opts.(type) {
 	case *rsa.PSSOptions:
